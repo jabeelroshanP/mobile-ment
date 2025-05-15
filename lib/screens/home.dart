@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobilement/Widgets/appBar.dart';
 import 'package:mobilement/Widgets/barchart.dart';
+import 'package:mobilement/Widgets/container.dart';
 import 'package:mobilement/constants/colors.dart';
 import 'package:mobilement/constants/text.dart';
 
@@ -37,6 +38,7 @@ class HomePage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+
               const SizedBox(height: 10),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 8.0),
@@ -50,6 +52,22 @@ class HomePage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
+           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              homeContainers(),
+              homeContainers(),
+            ],
+           ),
+           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              homeContainers(),
+              homeContainers(),
+            ],
+           ),
+
+              SizedBox(height: 20,),
               Center(
                 child: Container(
                   width: MediaQuery.of(context).size.width * 0.9,
