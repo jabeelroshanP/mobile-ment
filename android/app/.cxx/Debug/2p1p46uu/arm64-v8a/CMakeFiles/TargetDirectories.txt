@@ -1,0 +1,2 @@
+D:/mobilement/android/app/.cxx/Debug/2p1p46uu/arm64-v8a/CMakeFiles/edit_cache.dir
+D:/mobilement/android/app/.cxx/Debug/2p1p46uu/arm64-v8a/CMakeFiles/rebuild_cache.dir
