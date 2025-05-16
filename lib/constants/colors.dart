@@ -7,7 +7,8 @@ class AppColors{
   static const appBarMobileTitle=Color(0xFF61DAFB);
   static const justSample=Color(0xFF282845);
   static const whiteClr=Colors.white;
-  static const grey=Color.fromARGB(255, 100, 100, 100);
+  static const grey=Color.fromARGB(255, 153, 153, 153);
   static const pinkGraph=Color(0xFFFF6B8B);
   static const greenGraph=Color(0xFF61DAFB);
+
 }

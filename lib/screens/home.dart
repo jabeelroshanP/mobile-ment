@@ -37,6 +37,7 @@ class HomePage extends StatelessWidget {
         body: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
 
               const SizedBox(height: 10),
@@ -55,15 +56,15 @@ class HomePage extends StatelessWidget {
            Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              homeContainers(),
-              homeContainers(),
+              homeContainers(Icons.currency_rupee_sharp,"Total Revenue","₹ 8,952"),
+              homeContainers(Icons.check_circle,"Completed","96"),
             ],
            ),
            Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              homeContainers(),
-              homeContainers(),
+              homeContainers(Icons.assignment,"Assigned","100"),
+              homeContainers(Icons.hourglass_empty,"In Progress","4"),
             ],
            ),
 
