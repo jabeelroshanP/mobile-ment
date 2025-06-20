@@ -1,7 +1,5 @@
 
 import 'package:flutter/material.dart';
-import 'package:mobile_servies/tech/constants/colors.dart';
-import 'package:mobile_servies/user/View/UserHome/user_home.dart';
 
 Widget colorContainers([ IconData? icon, String? count, String? text,Color? color,Color? containerClr]) {
   return Padding(

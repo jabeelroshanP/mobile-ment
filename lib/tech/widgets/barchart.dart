@@ -18,7 +18,7 @@ class CustomBarChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (monthlyData.isEmpty) {
-      return const Center(child: Text(',no chart data available'));
+      return const Center(child: Text('No chart data available'));
     }
 
     final List<String> months = monthlyData.keys.toList();
@@ -26,11 +26,10 @@ class CustomBarChart extends StatelessWidget {
         .expand((metric) => metric.values)
         .fold<double>(0, (a, b) => a > b ? a : b);
 
-    // Ensure a reasonable minimum maxY to avoid division by zero
     final double chartMaxY = maxValue <= 0 ? 100 : maxValue + maxValue * 0.2;
     final double interval = chartMaxY / 4;
 
-    const double barWidth = 20; // Reduced for better spacing
+    const double barWidth = 20; 
     const double groupSpacing = 15;
     final double chartWidth = months.length * (metrics.length * barWidth + groupSpacing);
 
@@ -39,7 +38,7 @@ class CustomBarChart extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            width: chartWidth < 300 ? 300 : chartWidth, // Minimum width for small datasets
+            width: chartWidth < 300 ? 300 : chartWidth, 
             height: 340,
             padding: const EdgeInsets.all(16),
             child: BarChart(

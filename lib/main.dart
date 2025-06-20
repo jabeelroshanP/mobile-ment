@@ -13,6 +13,7 @@ import 'package:mobile_servies/tech/controller/providers/assigned_provider.dart'
 import 'package:mobile_servies/tech/controller/providers/dashboard_provider.dart';
 import 'package:mobile_servies/tech/controller/providers/inProgress_provider.dart';
 import 'package:mobile_servies/tech/controller/providers/profile_provider.dart';
+import 'package:mobile_servies/tech/service/profile_service.dart';
 import 'package:mobile_servies/tech/view/bottomNav/bottom_nav.dart';
 import 'package:mobile_servies/user/View/UserBottom/user_bottom.dart';
 import 'package:mobile_servies/user/View/UserLogin/user_login.dart';
@@ -52,7 +53,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => BookingProvider()),  
         ChangeNotifierProvider(create: (context) => InProgressTechProvider()),
         ChangeNotifierProvider(create: (context) => CompletedTechProvider()),
-        ChangeNotifierProvider(create: (context) => TechnicianProfileProvider()),
+        ChangeNotifierProvider(create: (context) => TechnicianProfileProvider(TechnicianApiService())),
         ChangeNotifierProvider(create: (context) => DashboardProvider()),
     ],
       child: MaterialApp(

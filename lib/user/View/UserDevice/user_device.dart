@@ -156,7 +156,7 @@ class UserDevice extends StatelessWidget {
                                                   fontWeight: FontWeight.w600,
                                                   color:  const Color.fromARGB(255, 103, 102, 102)
                                                 ),
-                                              ),
+                                              ),                                         
                                             ],
                                           ),
                                           Container(

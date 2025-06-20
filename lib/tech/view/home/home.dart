@@ -21,7 +21,6 @@ class _HomePageTechState extends State<HomePageTech> {
   @override
   void initState() {
     super.initState();
-    // Defer fetch until after the build phase
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final dashboardProvider = Provider.of<DashboardProvider>(context, listen: false);
       dashboardProvider.fetchDashboardData();
@@ -169,8 +168,6 @@ class _HomePageTechState extends State<HomePageTech> {
                               children: [
                                 SingleChildScrollView(
                                   child: Wrap(
-                                    spacing: 10,
-                                    runSpacing: 10,
                                     alignment: WrapAlignment.center,
                                     children: [
                                       Row(
@@ -232,12 +229,12 @@ class _HomePageTechState extends State<HomePageTech> {
                                               Text(
                                                 TextConsts.monthlyRevenueAndbookingCount,
                                                 style: GoogleFonts.openSans(
-                                                  color: const Color(0xFF5A5A5A),
+                                                  color: const Color.fromARGB(255, 255, 255, 255),
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.w400,
                                                 ),
                                               ),
-                                              const Gap(10),
+                                              const Gap(20),
                                               SizedBox(
                                                 height: 380,
                                                 child: CustomBarChart(

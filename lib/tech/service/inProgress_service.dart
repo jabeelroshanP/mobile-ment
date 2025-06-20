@@ -7,8 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 class InProgressTaskService {
   final Dio _dio = Dio(BaseOptions(
     baseUrl: 'https://mobilemend-backend.onrender.com',
-    connectTimeout: const Duration(seconds: 10),
-    receiveTimeout: const Duration(seconds: 15),
+    // connectTimeout: const Duration(seconds: 10),
+    // receiveTimeout: const Duration(seconds: 15),
   ));
   final UserAuthService _authService = UserAuthService();
 
