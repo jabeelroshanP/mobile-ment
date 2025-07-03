@@ -23,35 +23,6 @@ Widget icon(IconData icon, Color color) {
   return Icon(icon, color: color);
 }
 
-// Widget TechTextField(String hintText, {int maxLines = 1}) {
-//   return TextFormField(
-//     maxLines: maxLines,
-//     decoration: InputDecoration(
-//       hintText: hintText,
-//       hintStyle: GoogleFonts.openSans(
-//         color: const Color(0xFF8D8D8D),
-//       ),
-//       filled: true,
-//       fillColor: Colors.white,
-//       border: OutlineInputBorder(
-//         borderRadius: BorderRadius.circular(10),
-//         borderSide: BorderSide.none,
-//       ),
-//       enabledBorder: OutlineInputBorder(
-//         borderRadius: BorderRadius.circular(10),
-//         borderSide: const BorderSide(color: Color(0xFF8D8D8D), width: 1),
-//       ),
-//       focusedBorder: OutlineInputBorder(
-//         borderRadius: BorderRadius.circular(10),
-//         borderSide: const BorderSide(color: Color(0xFF718355), width: 2),
-//       ),
-//     ),
-//     style: GoogleFonts.openSans(
-//       color: const Color(0xFF2E2E2E),
-//     ),
-//   );
-// }
-
 class TechTextField extends StatelessWidget {
   final String hintText;
   final int? maxLines;

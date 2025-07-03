@@ -8,6 +8,8 @@ class AssignedTechProvider with ChangeNotifier {
   final UserAuthService authService = UserAuthService();
 
   List<AssignedModel> assignedTasks = [];
+  List<AssignedModel> searchAssignedList = [];
+  List<AssignedModel> searchedList = [];
   int selectedIndex = -1;
   bool isLoading = false;
   String? errorMessage;
@@ -32,36 +34,51 @@ class AssignedTechProvider with ChangeNotifier {
           fetchTasks(technicianId),
           fetchTaskCounts(technicianId),
         ]);
+        searchAssignedList = List.from(assignedTasks);
+        searchedList = List.from(assignedTasks);
       } else {
         errorMessage = 'No technician ID found. Please log in again.';
         assignedTasks = [];
+        searchAssignedList = [];
+        searchedList = [];
         taskCounts = {'Assigned': 0, 'InProgress': 0, 'Completed': 0};
       }
     } catch (e) {
       errorMessage = 'Failed to initialize data: $e';
       assignedTasks = [];
+      searchAssignedList = [];
+      searchedList = [];
       taskCounts = {'Assigned': 0, 'InProgress': 0, 'Completed': 0};
     } finally {
       isLoading = false;
       notifyListeners();
     }
   }
+    Future<void> refreshassigned() async {
+    await initialize();
+  }
 
-  Future<void> fetchTasks(String technicianId, {String? searchString}) async {
+  Future<void> fetchTasks(String technicianId) async {
     try {
       assignedTasks = await taskService.fetchAssignedTasks(
         technicianId: technicianId,
         status: 'Assigned',
-        searchString: searchString,
       );
+      searchAssignedList = List.from(assignedTasks);
+      searchedList = List.from(assignedTasks);
       isAccepting.removeWhere((key, _) => !assignedTasks.any((task) => task.bookingId == key));
       isRejecting.removeWhere((key, _) => !assignedTasks.any((task) => task.bookingId == key));
     } catch (e) {
       errorMessage = 'Failed to fetch tasks: $e';
       assignedTasks = [];
+      searchAssignedList = [];
+      searchedList = [];
       throw Exception('Failed to fetch tasks: $e');
     }
+    notifyListeners();
   }
+
+ 
 
   Future<void> fetchTaskCounts(String technicianId) async {
     try {
@@ -71,6 +88,7 @@ class AssignedTechProvider with ChangeNotifier {
       taskCounts = {'Assigned': 0, 'InProgress': 0, 'Completed': 0};
       throw Exception('Failed to fetch task counts: $e');
     }
+    notifyListeners();
   }
 
   void dropContainer(int index) {
@@ -167,32 +185,24 @@ class AssignedTechProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchTasksWithSearch(String? searchString) async {
-    isLoading = true;
-    errorMessage = null;
-    notifyListeners();
-
-    try {
-      final technicianId = await authService.getTechnicianId();
-      if (technicianId != null) {
-        await fetchTasks(technicianId, searchString: searchString);
-      } else {
-        errorMessage = 'No technician ID found. Please log in again.';
-        assignedTasks = [];
-      }
-    } catch (e) {
-      errorMessage = 'Failed to search tasks: $e';
-      assignedTasks = [];
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
-  }
-
   bool isValidGuid(String value) {
     final guidRegex = RegExp(
       r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
     );
     return guidRegex.hasMatch(value);
+  }
+
+  Future<void> searchFn(String search) async {
+    if (search.isEmpty) {
+      searchedList = List.from(searchAssignedList);
+    } else {
+      searchedList = searchAssignedList.where((task) {
+        return task.customerName.toLowerCase().startsWith(search.toLowerCase()) ||
+            task.issue.toLowerCase().startsWith(search.toLowerCase()) ||
+            task.deviceId.toLowerCase().startsWith(search.toLowerCase()) ||
+            task.deviceDetails.toLowerCase().startsWith(search.toLowerCase());
+      }).toList();
+    }
+    notifyListeners();
   }
 }

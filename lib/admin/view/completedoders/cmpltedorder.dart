@@ -5,6 +5,7 @@ import 'package:mobile_servies/admin/service/completed_order_admin_service.dart'
 import 'package:mobile_servies/admin/view/DragBtn/draggable_button.dart';
 import 'package:mobile_servies/tech/constants/colors.dart';
 import 'package:mobile_servies/tech/widgets/shimmer.dart';
+import 'package:mobile_servies/tech/widgets/textField.dart';
 import 'package:mobile_servies/user/View/UserHome/homeHeader.dart';
 import 'package:mobile_servies/user/View/UserLogin/user_login.dart';
 import 'package:provider/provider.dart';
@@ -14,7 +15,7 @@ class Cmpltedorderpage extends StatelessWidget {
   Cmpltedorderpage({super.key});
 
   final GlobalKey _cmpltOrders = GlobalKey();
-  final TextEditingController searchController = TextEditingController();
+  final TextEditingController searchCtrl = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -53,10 +54,18 @@ class Cmpltedorderpage extends StatelessWidget {
                           style: TextStyle(color: Colors.grey, fontSize: 16),
                         ),
                         const SizedBox(height: 16),
+                        completedSearchField(
+                          context: context,
+                          onChanged: (value) {
+                            Provider.of<CompletedorderProvider>(context, listen: false)
+                                .searchFn(value);
+                          },
+                          controller: searchCtrl,
+                        ),
+                        const SizedBox(height: 16),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 25),
                   Expanded(
                     child: Container(
                       width: double.infinity,
@@ -93,7 +102,12 @@ class Cmpltedorderpage extends StatelessWidget {
                                         padding: const EdgeInsets.only(top: 16.0),
                                         child: ElevatedButton(
                                           onPressed: () {
-                                            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => UserLogin(),));
+                                            Navigator.pushReplacement(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => UserLogin(),
+                                              ),
+                                            );
                                           },
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: AppColors.green,
@@ -128,28 +142,33 @@ class Cmpltedorderpage extends StatelessWidget {
                                 ),
                               );
                             }
-                            if (value.completedOrders.isEmpty) {
-                              return const Center(child: Text('No completed orders found'));
+                            if (value.searchedList.isEmpty) {
+                              return const Center(
+                                child: Text('No completed orders found'),
+                              );
                             }
-                            return ListView.builder(
-                              itemCount: value.completedOrders.length,
-                              itemBuilder: (context, index) {
-                                final order = value.completedOrders[index];
-                                return _buildCompletedCard(
-                                  context,
-                                  serviceID: order.id,
-                                  customerName: order.customerName ?? 'Unknown',
-                                  device: order.device ?? 'Unknown',
-                                  issue: order.issue ?? 'Unknown',
-                                  date: order.date != null
-                                      ? DateFormat('dd/MM/yyyy').format(order.date!)
-                                      : 'Unknown',
-                                  location: order.location ?? 'Unknown',
-                                  amount: order.amount ?? 0.0,
-                                  service: order.service ?? 'Unknown',
-                                  status: order.status,
-                                );
-                              },
+                            return RefreshIndicator(
+                              onRefresh: () => value.fetchCompletedOrders(),
+                              child: ListView.builder(
+                                itemCount: value.searchedList.length,
+                                itemBuilder: (context, index) {
+                                  final order = value.searchedList[index];
+                                  return _buildCompletedCard(
+                                    context,
+                                    serviceID: order.id,
+                                    customerName: order.customerName ?? 'Unknown',
+                                    device: order.device ?? 'Unknown',
+                                    issue: order.issue ?? 'Unknown',
+                                    date: order.date != null
+                                        ? DateFormat('dd/MM/yyyy').format(order.date!)
+                                        : 'Unknown',
+                                    location: order.location ?? 'Unknown',
+                                    amount: order.amount ?? 0.0,
+                                    service: order.service ?? 'Unknown',
+                                    status: order.status,
+                                  );
+                                },
+                              ),
                             );
                           },
                         ),

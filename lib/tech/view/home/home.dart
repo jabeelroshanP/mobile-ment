@@ -7,6 +7,7 @@ import 'package:mobile_servies/tech/controller/providers/dashboard_provider.dart
 import 'package:mobile_servies/tech/view/home/notification.dart';
 import 'package:mobile_servies/tech/view/home/widget/container.dart';
 import 'package:mobile_servies/tech/widgets/barchart.dart';
+import 'package:mobile_servies/tech/widgets/userIcon.dart';
 import 'package:mobile_servies/user/View/UserHome/homeHeader.dart';
 import 'package:provider/provider.dart';
 
@@ -21,10 +22,12 @@ class _HomePageTechState extends State<HomePageTech> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final dashboardProvider = Provider.of<DashboardProvider>(context, listen: false);
-      dashboardProvider.fetchDashboardData();
-    });
+   
+     WidgetsBinding.instance.addPostFrameCallback((_) {
+  Provider.of<DashboardProvider>(context, listen: false).fetchDashboardData();
+});
+
+
   }
 
   @override
@@ -36,10 +39,16 @@ class _HomePageTechState extends State<HomePageTech> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Gap(35),
-             Padding(
-              padding: EdgeInsets.all(12.0),
-              child: AppLogo(),
-            ),
+             Row(
+               children: [
+                 Padding(
+                  padding: EdgeInsets.all(12.0),
+                  child: AppLogo(),
+                             ),
+                           Spacer(),
+                           UserMenuPopup(),SizedBox(width: 15,),
+               ],
+             ),
             const Gap(30),
             Expanded(
               child: Container(
@@ -131,7 +140,7 @@ class _HomePageTechState extends State<HomePageTech> {
                         child: Consumer<DashboardProvider>(
                           builder: (context, provider, child) {
                             if (provider.isLoading) {
-                              return const Center(child: CircularProgressIndicator());
+                              return const Center(child:  CircularProgressIndicator(color:  Color.fromARGB(255, 85, 105, 53)));
                             }
                             if (provider.error != null) {
                               return Center(
@@ -152,9 +161,10 @@ class _HomePageTechState extends State<HomePageTech> {
                                 ),
                               );
                             }
-                            if (provider.dashboardData == null) {
+                           if (provider.dashboardData == null) {
                               return const Center(child: Text('No data available'));
                             }
+
                             final monthlyData = {
                               for (var item in provider.dashboardData!.chartData)
                                 item['month'] as String: {

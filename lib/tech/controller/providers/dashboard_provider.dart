@@ -17,7 +17,7 @@ class DashboardProvider with ChangeNotifier {
     try {
       dashboardData = await dashboardService.fetchDashboardData();
     } catch (e) {
-      error = e.toString().replaceFirst('Exception: ', '');
+      error = e.toString().replaceFirst('Exception: ', ''); 
     } finally {
       isLoading = false;
       notifyListeners();

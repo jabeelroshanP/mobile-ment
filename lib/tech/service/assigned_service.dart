@@ -1,3 +1,4 @@
+
 import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:mobile_servies/tech/model/assigned_model.dart';
@@ -7,8 +8,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AssignedTaskService {
   final Dio _dio = Dio(BaseOptions(
     baseUrl: 'https://mobilemend-backend.onrender.com',
-    // connectTimeout: const Duration(seconds: 10),
-    // receiveTimeout: const Duration(seconds: 15),
   ));
   final UserAuthService _authService = UserAuthService();
 
@@ -22,7 +21,6 @@ class AssignedTaskService {
   Future<List<AssignedModel>> fetchAssignedTasks({
     required String technicianId,
     String status = 'Assigned',
-    String? searchString,
   }) async {
     final token = await _getAuthToken();
     if (token == null) throw Exception('Not authenticated');
@@ -34,7 +32,6 @@ class AssignedTaskService {
         queryParameters: {
           'status': status,
           'technicianId': technicianId,
-          if (searchString != null) 'searchString': searchString,
         },
         options: Options(headers: {
           'Authorization': 'Bearer $token',
@@ -189,11 +186,9 @@ class AssignedTaskService {
 
       log('ℹ️ Reject Task Response: ${response.data}, Status: ${response.statusCode}');
       if (response.statusCode == 200) {
-        // Verify the task status by fetching the updated task
         final tasks = await fetchAssignedTasks(
           technicianId: technicianId,
           status: 'Rejected',
-          searchString: bookingId,
         );
         final taskRejected = tasks.any((task) => task.bookingId == bookingId && task.status == 'Rejected');
         if (taskRejected) {
@@ -208,12 +203,10 @@ class AssignedTaskService {
     } on DioException catch (e) {
       log('❌ Error rejecting task: ${e.response?.data ?? e.message}, Status: ${e.response?.statusCode}');
       if (e.response?.statusCode == 500) {
-        // Even if a 500 error occurs, check if the task was actually rejected
         try {
           final tasks = await fetchAssignedTasks(
             technicianId: technicianId,
             status: 'Rejected',
-            searchString: bookingId,
           );
           final taskRejected = tasks.any((task) => task.bookingId == bookingId && task.status == 'Rejected');
           if (taskRejected) {

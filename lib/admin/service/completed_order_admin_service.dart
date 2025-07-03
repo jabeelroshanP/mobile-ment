@@ -1,3 +1,4 @@
+
 import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,13 +19,11 @@ class CompletedOrderService {
 
   Future<List<CompletedOrder>> getCompletedOrders({
     String? technicianId,
-    String? searchString,
   }) async {
     try {
       log('Fetching completed orders...');
       log('Base URL: $baseURL');
       log('Technician ID: $technicianId');
-      log('Search String: $searchString');
 
       final authToken = await _getAuthToken();
 
@@ -33,8 +32,6 @@ class CompletedOrderService {
         queryParameters: {
           'status': 'Completed',
           if (technicianId != null) 'technicianId': technicianId,
-          if (searchString != null && searchString.isNotEmpty)
-            'searchString': searchString,
         },
         options: Options(
           headers: {

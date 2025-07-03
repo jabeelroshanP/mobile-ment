@@ -1,3 +1,4 @@
+
 import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:mobile_servies/admin/Model/tech_reqst_admin_model.dart';
@@ -11,7 +12,7 @@ class TechnicianRequestService {
 
   TechnicianRequestService() {
     _dio.options.validateStatus = (status) {
-      return status != null && (status >= 200 && status < 300) || status == 404;
+      return status != null && (status >= 200 && status < 300) || status == 400 || status == 404;
     };
   }
 
@@ -25,7 +26,6 @@ class TechnicianRequestService {
 
   Future<List<TechnicianRequest>> fetchTechnicianRequests({
     String? status,
-    String? search,
   }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -45,9 +45,6 @@ class TechnicianRequestService {
       final queryParameters = <String, dynamic>{};
       if (status != null && status.isNotEmpty && status != 'All') {
         queryParameters['status'] = status;
-      }
-      if (search != null && search.isNotEmpty) {
-        queryParameters['search'] = search;
       }
 
       log('Fetching technician requests from $getRequestsUrl with query: $queryParameters');
@@ -116,6 +113,7 @@ class TechnicianRequestService {
         'technicianRequestId': technicianRequestId,
         'status': status,
         'adminRemarks': adminRemarks ?? '',
+        'update': true,
       };
 
       log('Updating request status with data: $data');
@@ -127,7 +125,16 @@ class TechnicianRequestService {
       log('Update request status response status: ${response.statusCode}');
       log('Update request status response data: ${response.data}');
 
-      return response.statusCode == 200;
+      if (response.statusCode == 200) {
+        return true;
+      } else if (response.statusCode == 400) {
+        final errors = (response.data['errors'] as Map<String, dynamic>?) ?? {};
+        final errorMessages = errors.entries
+            .map((entry) => '${entry.key}: ${entry.value.join(', ')}')
+            .join('; ');
+        throw Exception('Validation errors: $errorMessages');
+      }
+      return false;
     } on DioException catch (e) {
       log('Dio error during update request status: ${e.message}');
       log('Dio response data: ${e.response?.data}');

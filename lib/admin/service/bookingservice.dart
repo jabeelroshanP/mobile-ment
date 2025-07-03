@@ -1,3 +1,4 @@
+
 import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:mobile_servies/admin/Model/bookingmodel.dart';
@@ -11,8 +12,6 @@ class BookingService {
       : _dio = Dio(
           BaseOptions(
             baseUrl: ApiConstants.baseURL,
-            // connectTimeout: const Duration(seconds: 30),
-            // receiveTimeout: const Duration(seconds: 30),
             headers: {'Content-Type': 'application/json'},
           ),
         );
@@ -33,10 +32,9 @@ class BookingService {
     String? bookingId,
     String? status,
     String? technicianId,
-    String? searchString,
   }) async {
     try {
-      log('Fetching bookings: bookingId=$bookingId, status=$status, technicianId=$technicianId, searchString=$searchString');
+      log('Fetching bookings: bookingId=$bookingId, status=$status, technicianId=$technicianId');
       final authToken = await _getAuthToken();
       if (authToken == null) {
         throw Exception('Authentication token not found. Please log in.');
@@ -49,8 +47,6 @@ class BookingService {
           if (status != null && status.isNotEmpty && status != 'All') 'status': status,
           if (technicianId != null && technicianId.isNotEmpty)
             'technicianId': technicianId,
-          if (searchString != null && searchString.isNotEmpty)
-            'searchString': searchString,
         },
         options: Options(
           headers: {'Authorization': 'Bearer $authToken'},
@@ -82,4 +78,4 @@ class BookingService {
       throw Exception('Failed to load bookings: $e');
     }
   }
-} 
+}

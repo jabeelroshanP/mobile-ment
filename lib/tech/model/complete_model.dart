@@ -41,8 +41,8 @@ class CompletedModel {
         '${json['deviceName'] ?? 'Unknown'} (${json['deviceType'] ?? ''})';
     final issue = json['issue']?.toString() ?? 'No issue specified';
 
-    final street = json['street'] ?? '';
-    final city = json['city'] ?? '';
+    final street = json['street']?.toString() ?? '';
+    final city = json['city']?.toString() ?? '';
     final pincode = json['pincode']?.toString() ?? '';
     final location =
         '$street, $city, $pincode'.replaceAll(RegExp(r'(, )+'), ', ').trim();
@@ -53,9 +53,19 @@ class CompletedModel {
     final serviceId = json['serviceId']?.toString() ?? '';
     final addressId = json['addressId']?.toString() ?? '';
     final deviceId = json['deviceId']?.toString() ?? '';
-    final serviceFee = double.tryParse(json['serviceFee']?.toString() ?? '0.0') ?? 0.0;
-    final bookingFee = double.tryParse(json['bookingFee']?.toString() ?? '0.0') ?? 0.0;
-    final travelAllowances = double.tryParse(json['travelAllowances']?.toString() ?? '0.0') ?? 0.0;
+
+    // Parse cost fields from bookingCostDetails
+    final bookingCostDetails = json['bookingCostDetails'] as Map<String, dynamic>? ?? {};
+    log('ℹ️ bookingCostDetails: $bookingCostDetails');
+    final serviceFee = (bookingCostDetails['serviceCharge'] is num)
+        ? (bookingCostDetails['serviceCharge'] as num).toDouble()
+        : double.tryParse(bookingCostDetails['serviceCharge']?.toString() ?? '0.0') ?? 0.0;
+    final bookingFee = (bookingCostDetails['bookingCharge'] is num)
+        ? (bookingCostDetails['bookingCharge'] as num).toDouble()
+        : double.tryParse(bookingCostDetails['bookingCharge']?.toString() ?? '0.0') ?? 0.0;
+    final travelAllowances = (bookingCostDetails['travelAllowance'] is num)
+        ? (bookingCostDetails['travelAllowance'] as num).toDouble()
+        : double.tryParse(bookingCostDetails['travelAllowance']?.toString() ?? '0.0') ?? 0.0;
 
     log('ℹ️ Parsed values: bookingId=$bookingId, customerName=$customerName, '
         'deviceDetails=$deviceDetails, issue=$issue, location=$location, '
@@ -82,19 +92,21 @@ class CompletedModel {
 
   Map<String, dynamic> toJson() {
     return {
-      'bookingId': bookingId,
+      'bookingID': bookingId,
       'customerName': customerName,
       'deviceDetails': deviceDetails,
       'issue': issue,
       'location': location,
-      'status': status,
+      'bookingStatus': status,
       'addressId': addressId,
       'serviceId': serviceId,
-      'technicianId': technicianId,
+      'technicianID': technicianId,
       'deviceId': deviceId,
-      'serviceFee': serviceFee,
-      'bookingFee': bookingFee,
-      'travelAllowances': travelAllowances,
+      'bookingCostDetails': {
+        'serviceCharge': serviceFee,
+        'bookingCharge': bookingFee,
+        'travelAllowance': travelAllowances,
+      },
     };
   }
 }

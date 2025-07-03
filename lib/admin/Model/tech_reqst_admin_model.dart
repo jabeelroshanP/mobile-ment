@@ -1,5 +1,6 @@
 class TechnicianRequest {
   final String technicianRequestId;
+  final String userId;
   final String name;
   final String email;
   final String phone;
@@ -16,6 +17,7 @@ class TechnicianRequest {
 
   TechnicianRequest({
     required this.technicianRequestId,
+    required this.userId,
     required this.name,
     required this.email,
     required this.phone,
@@ -33,20 +35,21 @@ class TechnicianRequest {
 
   factory TechnicianRequest.fromJson(Map<String, dynamic> json) {
     return TechnicianRequest(
-      technicianRequestId: json['technicianRequestId'] ?? '',
-      name: json['name'] ?? '',
-      email: json['email'] ?? '',
-      phone: json['phone'] ?? '',
-      experience: json['experience'] ?? 0,
-      specialization: json['specialization'] ?? '',
-      bio: json['bio'] ?? '',
-      place: json['place'] ?? '',
-      longitude: (json['longitude'] ?? 0.0).toDouble(),
-      latitude: (json['latitude'] ?? 0.0).toDouble(),
-      requestDate: json['requestDate'] ?? '',
-      status: json['status'] ?? 'Pending',
-      documentData: json['documentData'],
-      adminRemark: json['adminRemark'],
+      technicianRequestId: json['technicianRequestID']?.toString() ?? '',
+      userId: json['userID']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      phone: json['phone']?.toString() ?? '',
+      experience: (json['experience'] as num?)?.toInt() ?? 0,
+      specialization: json['specialization']?.toString() ?? '',
+      bio: json['bio']?.toString() ?? '',
+      place: json['place']?.toString() ?? '',
+      longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
+      latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
+      requestDate: json['requestDate']?.toString() ?? '',
+      status: json['status']?.toString() ?? 'Pending',
+      documentData: json['documentData']?.toString(),
+      adminRemark: json['adminRemark']?.toString(),
     );
   }
 }

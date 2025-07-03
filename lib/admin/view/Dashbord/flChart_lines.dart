@@ -1,230 +1,165 @@
-
-// Line Chart
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile_servies/admin/controller/dashboard_provider.dart';
 
-Widget LineChartFL() {
-  return LineChart(
-    LineChartData(
-      gridData: FlGridData(
-        show: true,
-        drawVerticalLine: true,
-        horizontalInterval: 1,
-        verticalInterval: 1,
-        getDrawingHorizontalLine: (value) {
-          return FlLine(
-            color: const Color(0xFF8D6E63).withOpacity(0.1),
-            strokeWidth: 1,
-          );
-        },
-        getDrawingVerticalLine: (value) {
-          return FlLine(
-            color: const Color(0xFF8D6E63).withOpacity(0.1),
-            strokeWidth: 1,
-          );
-        },
-      ),
-      titlesData: FlTitlesData(
-        show: true,
-        rightTitles: const AxisTitles(
-          sideTitles: SideTitles(showTitles: false),
-        ),
-        topTitles: const AxisTitles(
-          sideTitles: SideTitles(showTitles: false),
-        ),
-        bottomTitles: AxisTitles(
-          sideTitles: SideTitles(
-            showTitles: true,
-            reservedSize: 30,
-            interval: 1,
-            getTitlesWidget: (value, meta) {
-              const style = TextStyle(
-                color: Color(0xFF8D6E63),
-                fontWeight: FontWeight.w500,
-                fontSize: 12,
-              );
-              Widget text;
-              switch (value.toInt()) {
-                case 0:
-                  text = const Text('Jan', style: style);
-                  break;
-                case 1:
-                  text = const Text('Feb', style: style);
-                  break;
-                case 2:
-                  text = const Text('Mar', style: style);
-                  break;
-                case 3:
-                  text = const Text('Apr', style: style);
-                  break;
-                case 4:
-                  text = const Text('May', style: style);
-                  break;
-                default:
-                  text = const Text('June', style: style);
-                  break;
-              }
-              return SideTitleWidget(
-                meta: meta,
-                child: text,
-              );
-            },
-          ),
-        ),
-        leftTitles: AxisTitles(
-          sideTitles: SideTitles(
-            showTitles: true,
-            interval: 1,
-            getTitlesWidget: (value, meta) {
-              const style = TextStyle(
-                color: Color(0xFF8D6E63),
-                fontWeight: FontWeight.w500,
-                fontSize: 12,
-              );
-              String text;
-              switch (value.toInt()) {
-                case 1:
-                  text = '5k';
-                  break;
-                case 3:
-                  text = '10k';
-                  break;
-                case 5:
-                  text = '15k';
-                  break;
-                default:
-                  return Container();
-              }
-              return Text(text, style: style, textAlign: TextAlign.left);
-            },
-            reservedSize: 40,
-          ),
-        ),
-      ),
-      borderData: FlBorderData(
-        show: false,
-      ),
-      minX: 0,
-      maxX: 4,
-      minY: 0,
-      maxY: 6,
-      lineBarsData: [
-        LineChartBarData(
-          spots: const [
-            FlSpot(0, 2.5),
-            FlSpot(1, 2.0),
-            FlSpot(2, 3.0),
-            FlSpot(3, 2.5),
-            FlSpot(4, 4.5),
-          ],
-          isCurved: true,
-          gradient: const LinearGradient(
-            colors: [Color(0xFF97A97C), Color(0xFF718355)], // Updated to green tones
-          ),
-          barWidth: 3,
-          isStrokeCapRound: true,
-          dotData: const FlDotData(
-            show: false,
-          ),
-          belowBarData: BarAreaData(
-            show: true,
-            gradient: LinearGradient(
-              colors: [
-                const Color.fromARGB(255, 0, 0, 0).withOpacity(0.3),
-                const Color.fromARGB(255, 0, 0, 0).withOpacity(0.0),
-              ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-          ),
-        ),
-        LineChartBarData(
-          spots: const [
-            FlSpot(0, 1.5),
-            FlSpot(1, 2.5),
-            FlSpot(2, 2.0),
-            FlSpot(3, 3.0),
-            FlSpot(4, 3.5),
-          ],
-          isCurved: true,
-          gradient: const LinearGradient(
-            colors: [Color.fromARGB(255, 0, 0, 0), Color.fromARGB(255, 19, 16, 16)], // Updated to gray tones
-          ),
-          barWidth: 3,
-          isStrokeCapRound: true,
-          dotData: const FlDotData(
-            show: false,
-          ),
-          belowBarData: BarAreaData(
-            show: true,
-            gradient: LinearGradient(
-              colors: [
-                const Color.fromARGB(255, 20, 20, 20).withOpacity(0.3),
-                const Color(0xFFF5F5F5).withOpacity(0.0),
-              ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
+Widget buildRevenueTab(AdminDashboardProvider provider) {
+  if (provider.isLoading && provider.metrics == null) {
+    return const Center(child:  CircularProgressIndicator(color:  Color.fromARGB(255, 85, 105, 53)));
+  }
 
-Widget buildChartContainer() {
-  return Container(
-    height: 400,
-    width: double.infinity,
-    padding: const EdgeInsets.all(16.0),
-    decoration: BoxDecoration(
-      color: const Color(0xFFF5F5F5), // Updated to match background
-      borderRadius: BorderRadius.circular(20),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.15),
-          offset: const Offset(0, 3),
-          blurRadius: 8,
-        ),
-      ],
-    ),
+  if (provider.error != null) {
+    return Center(
+      child: Text(
+        "Error loading data: ${provider.error}",
+        style: const TextStyle(color: Colors.red),
+      ),
+    );
+  }
+
+  final metrics = provider.metrics;
+  if (metrics == null || metrics.revenueChartData.isEmpty) {
+    return const Center(child: Text("No data available"));
+  }
+
+  return Padding(
+    padding: const EdgeInsets.all(20.0),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Revenue & Completed Bookings",
+          "Revenue Overview",
           style: GoogleFonts.poppins(
             fontSize: 22,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF2E2E2E),
+            color: Color(0xFF2E2E2E)
           ),
         ),
         const SizedBox(height: 5),
         Text(
-          "Monthly performance overview",
+          "Monthly revenue and expenses for this year",
           style: GoogleFonts.openSans(
             fontSize: 16,
             fontWeight: FontWeight.w400,
-            color: const Color(0xFF5A5A5A),
+            color:  Color(0xFF5A5A5A),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 20),
         Expanded(
-          child: LineChartFL(),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Color.fromARGB(255, 189, 188, 188).withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.all(16),
+            child: BarChart(
+              BarChartData(
+                alignment: BarChartAlignment.spaceAround,
+                maxY: calculateMaxY(provider),
+                minY: -calculateMaxY(provider),
+                titlesData: FlTitlesData(
+                  show: true,
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 30,
+                      interval: 1,
+                      getTitlesWidget: (value, meta) {
+                        if (value.toInt() >= metrics.revenueChartData.length) {
+                          return const Text('');
+                        }
+                        return SideTitleWidget(
+                          meta: meta,
+                          child: Text(
+                            metrics.revenueChartData[value.toInt()].month
+                                .substring(0, 3),
+                            style: TextStyle(
+                              color: Color(0xFF5A5A5A),
+                              fontWeight: FontWeight.w500,
+                              fontSize: 12,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      interval: calculateMaxY(provider) / 5,
+                      getTitlesWidget: (value, meta) {
+                        return Text(
+                          value >= 0 ? '\₹${value.toInt()}K' : '₹${(-value).toInt()}K',
+                          style: TextStyle(
+                            color:Color(0xFF5A5A5A),
+                            fontWeight: FontWeight.w500,
+                            fontSize: 12,
+                          ),
+                        );
+                      },
+                      reservedSize: 40,
+                    ),
+                  ),
+                ),
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: true,
+                  horizontalInterval: calculateMaxY(provider) / 5,
+                  verticalInterval: 1,
+                  getDrawingHorizontalLine: (value) {
+                    return FlLine(
+                      color: const Color.fromARGB(255, 133, 64, 64).withOpacity(0.2),
+                      strokeWidth: 1,
+                    );
+                  },
+                  getDrawingVerticalLine: (value) {
+                    return FlLine(
+                      color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.2),
+                      strokeWidth: 1.5,
+                    );
+                  },
+                ),
+                borderData: FlBorderData(show: false),
+                barGroups: _getBarGroups(provider),
+                barTouchData: BarTouchData(
+                  enabled: true,
+                  touchTooltipData: BarTouchTooltipData(
+                    getTooltipColor: (_) => Colors.black.withOpacity(0.8),
+                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      final value = rod.toY;
+                      return BarTooltipItem(
+                        value >= 0 ? '\₹${value.toInt()}K' : '₹${(-value).toInt()}K',
+                        GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
         const SizedBox(height: 15),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildLegendItem(
-              color: const Color(0xFF718355), // Updated to match line chart
+            buildLegendItem(
+              color: Colors.green[600]!,
               label: 'Revenue',
             ),
             const SizedBox(width: 16),
-            _buildLegendItem(
-              color:  Color.fromARGB(255, 20, 20, 20), // Updated to match second line
-              label: 'Bookings',
+            buildLegendItem(
+              color: Colors.red[400]!,
+              label: 'Expenses',
             ),
           ],
         ),
@@ -233,26 +168,77 @@ Widget buildChartContainer() {
   );
 }
 
-Widget _buildLegendItem({required Color color, required String label}) {
-  return Row(
-    children: [
+List<BarChartGroupData> _getBarGroups(AdminDashboardProvider provider) {
+  final metrics = provider.metrics;
+  if (metrics == null || metrics.revenueChartData.isEmpty) return [];
+
+  return metrics.revenueChartData.asMap().entries.map((entry) {
+    final index = entry.key;
+    final data = entry.value;
+    return BarChartGroupData(
+      x: index,
+      barRods: [
+        BarChartRodData(
+          toY: data.revenue / 1000,
+          color: Colors.green[600],
+          width: 22,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+          backDrawRodData: BackgroundBarChartRodData(
+            show: true,
+            toY: 0,
+            color: Colors.grey.withOpacity(0.1),
+          ),
+        ),
+        BarChartRodData(
+          toY: -data.expense / 1000, 
+          color: Colors.red[400],
+          width: 22,
+          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(4)),
+          backDrawRodData: BackgroundBarChartRodData(
+            show: true,
+            toY: 0,
+            color: Colors.grey.withOpacity(0.1),
+          ),
+        ),
+      ],
+    );
+  }).toList();
+}
+
+Widget buildLegendItem({
+  required Color color,
+  required String label,
+}) {
+  return Row(mainAxisAlignment: MainAxisAlignment.center,
+    children: [SizedBox(width: 18),
       Container(
         width: 12,
         height: 12,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-        ),
+        color: color,
       ),
-      const SizedBox(width: 6),
+      const SizedBox(width: 18),
       Text(
         label,
-        style: const TextStyle(
-          color: Color(0xFF5A5A5A), 
+        style: GoogleFonts.poppins(
+          fontSize: 14,
           fontWeight: FontWeight.w500,
-          fontSize: 12,
+          color: Color(0xFF5A5A5A),
         ),
       ),
     ],
   );
+}
+
+// Calculate Max Y (updated to handle both revenue and expense)
+double calculateMaxY(AdminDashboardProvider provider) {
+  final metrics = provider.metrics;
+  if (metrics == null || metrics.revenueChartData.isEmpty) return 10.0;
+  final revenueMax = metrics.revenueChartData
+      .map((e) => e.revenue)
+      .reduce((a, b) => a > b ? a : b);
+  final expenseMax = metrics.revenueChartData
+      .map((e) => e.expense)
+      .reduce((a, b) => a > b ? a : b);
+  return (revenueMax > expenseMax ? revenueMax : expenseMax).ceilToDouble() /
+      1000; // Convert to thousands
 }

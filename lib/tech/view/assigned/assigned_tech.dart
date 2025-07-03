@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:mobile_servies/tech/constants/colors.dart';
@@ -7,9 +8,7 @@ import 'package:mobile_servies/tech/model/assigned_model.dart';
 import 'package:mobile_servies/tech/widgets/container.dart';
 import 'package:mobile_servies/tech/widgets/shimmer.dart';
 import 'package:mobile_servies/tech/widgets/textField.dart';
-import 'package:mobile_servies/user/View/UserHome/user_homewidget.dart';
 import 'package:provider/provider.dart';
-import 'package:shimmer/shimmer.dart';
 
 class AssignedPageTech extends StatefulWidget {
   const AssignedPageTech({super.key});
@@ -22,10 +21,12 @@ class _AssignedPageTechState extends State<AssignedPageTech> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+   
       Provider.of<AssignedTechProvider>(context, listen: false).initialize();
-    });
+   
   }
+
+  final TextEditingController assignedCtrl = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -46,14 +47,17 @@ class _AssignedPageTechState extends State<AssignedPageTech> {
                 ),
               ),
             ),
-            const SizedBox(height: 10),
-            searchField(
-              onChanged: (value) {
-                Provider.of<AssignedTechProvider>(context, listen: false)
-                    .fetchTasksWithSearch(value);
-              },
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: searchField(
+                context: context,
+                onChanged: (value) {
+                  Provider.of<AssignedTechProvider>(context, listen: false).searchFn(value);
+                },
+                controller: assignedCtrl,
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             _buildStatusCounters(),
             const SizedBox(height: 8),
             _buildTaskList(),
@@ -74,6 +78,7 @@ class _AssignedPageTechState extends State<AssignedPageTech> {
                 Icons.assignment,
                 ' ${provider.taskCounts['Assigned'] ?? 0}',
                 'Assigned',
+
               ),
               colorContainers(
                 Icons.hourglass_empty,
@@ -92,37 +97,48 @@ class _AssignedPageTechState extends State<AssignedPageTech> {
     );
   }
 
-  Widget _buildTaskList() {
-    return Expanded(
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFF718355)),
-          color: Colors.white,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(40),
-            topRight: Radius.circular(40),
-          ),
+ Widget _buildTaskList() {
+  return Expanded(
+    child: Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFF718355)),
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(40),
+          topRight: Radius.circular(40),
         ),
-        child: Consumer<AssignedTechProvider>(
-          builder: (context, provider, _) {
-            if (provider.isLoading && provider.assignedTasks.isEmpty) {
-              return buildShimmerList();
-            }
-            if (provider.assignedTasks.isEmpty) {
-              return Center(
+      ),
+      child: Consumer<AssignedTechProvider>(
+        builder: (context, provider, _) {
+          if (provider.isLoading) {
+            return buildShimmerList();
+          }
+         
+
+          if (provider.assignedTasks.isEmpty) {
+            return Center(
+              child: Text(
+                provider.errorMessage ?? 'No assigned tasks',
+              ),
+            );
+          }else if(provider.searchedList.isEmpty){
+               return Center(
                 child: Text(
-                  provider.errorMessage ?? 'No assigned tasks',
+                  provider.errorMessage ?? 'No searched tasks found',
                 ),
               );
             }
-            return ListView.builder(
-              padding: const EdgeInsets.all(20),
-              itemCount: provider.assignedTasks.length,
-              itemBuilder: (context, index) {
-                final task = provider.assignedTasks[index];
-                final isExpanded = provider.selectedIndex == index;
 
+          return RefreshIndicator(
+            onRefresh: () => provider.initialize(),
+            child: ListView.builder(
+              padding: const EdgeInsets.all(20),
+              itemCount: provider.searchedList.length,
+              itemBuilder: (context, index) {
+                final task = provider.searchedList[index];
+                final isExpanded = provider.selectedIndex == index;
+            
                 return Column(
                   children: [
                     GestureDetector(
@@ -176,12 +192,13 @@ class _AssignedPageTechState extends State<AssignedPageTech> {
                   ],
                 );
               },
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildExpandedTaskDetails(
     AssignedTechProvider provider,
@@ -221,7 +238,7 @@ class _AssignedPageTechState extends State<AssignedPageTech> {
               children: [
                 ElevatedButton.icon(
                   onPressed: provider.isAccepting[task.bookingId] ?? false
-                      ? null // Disable button while loading
+                      ? null
                       : () async {
                           final success =
                               await provider.acceptTask(task.bookingId);
@@ -249,7 +266,7 @@ class _AssignedPageTechState extends State<AssignedPageTech> {
                 const SizedBox(width: 5),
                 ElevatedButton.icon(
                   onPressed: provider.isRejecting[task.bookingId] ?? false
-                      ? null // Disable button while loading
+                      ? null
                       : () {
                           _showRejectConfirmationDialog(provider, task);
                         },
@@ -285,11 +302,11 @@ class _AssignedPageTechState extends State<AssignedPageTech> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: text("Confirm Rejection", const Color.fromARGB(179, 67, 67, 67), 23, FontWeight.w500),
+          title: const Text("Confirm Rejection"),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              text("Are you sure you want to reject this task?", const Color.fromARGB(253, 96, 95, 95), 18, FontWeight.w400),
+              const Text("Are you sure you want to reject this task?"),
               const SizedBox(height: 10),
               TextField(
                 controller: reasonController,

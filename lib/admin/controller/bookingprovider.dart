@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:mobile_servies/admin/Model/bookingmodel.dart';
 import 'package:mobile_servies/admin/service/bookingservice.dart';
 
 class BookingProvider with ChangeNotifier {
   final BookingService service;
   List<Booking> bookings = [];
+  List<Booking> searchBookingsList = [];
+  List<Booking> searchedList = [];
   bool isLoading = false;
   String error = '';
   String selectedFilter = 'All';
-  String searchQuery = '';
-   List<String> filterOptions = [
+
+  List<String> filterOptions = [
     'All',
     'Assigned',
     'InProgress',
     'Accepted',
     'Rejected',
-    'Reassigned',
     'Completed',
   ];
 
@@ -29,20 +31,25 @@ class BookingProvider with ChangeNotifier {
     try {
       bookings = await service.getBookings(
         status: selectedFilter == 'All' ? null : selectedFilter,
-        searchString: searchQuery.isEmpty ? null : searchQuery,
       );
-      if (bookings.isEmpty && searchQuery.isNotEmpty) {
-        error = 'No bookings found for search query "$searchQuery"';
-      } else if (bookings.isEmpty) {
+      searchBookingsList = List.from(bookings);
+      searchedList = List.from(bookings);
+      if (bookings.isEmpty) {
         error = 'No bookings available';
       }
     } catch (e) {
       error = e.toString();
       bookings = [];
+      searchBookingsList = [];
+      searchedList = [];
     } finally {
       isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> refreshBookings() async {
+    await fetchBookings();
   }
 
   void setFilter(String filter) {
@@ -50,19 +57,30 @@ class BookingProvider with ChangeNotifier {
     fetchBookings();
   }
 
-  void setSearchQuery(String query) {
-    searchQuery = query;
-    fetchBookings();
-  }
-
   void resetFilter() {
     selectedFilter = 'All';
-    searchQuery = '';
     fetchBookings();
   }
 
   void refresh() {
     error = '';
     fetchBookings();
+  }
+
+  Future<void> searchFn(String search) async {
+    if (search.isEmpty) {
+      searchedList = List.from(searchBookingsList);
+    } else {
+      searchedList = searchBookingsList.where((booking) {
+        final formattedDate = booking.createdAt != null
+            ? DateFormat('MMM d, yyyy').format(booking.createdAt!)
+            : '';
+        return (booking.customerName?.toLowerCase().startsWith(search.toLowerCase()) ?? false) ||
+            (booking.serviceName?.toLowerCase().startsWith(search.toLowerCase()) ?? false) ||
+            (booking.deviceName?.toLowerCase().startsWith(search.toLowerCase()) ?? false) ||
+            formattedDate.toLowerCase().startsWith(search.toLowerCase());
+      }).toList();
+    }
+    notifyListeners();
   }
 }

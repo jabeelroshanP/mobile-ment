@@ -1,12 +1,10 @@
 
 import 'package:flutter/material.dart';
-import 'package:mobile_servies/tech/constants/colors.dart';
 import 'package:mobile_servies/tech/controller/providers/Bottomnavbar_provider.dart';
 import 'package:mobile_servies/tech/view/assigned/assigned_tech.dart';
 import 'package:mobile_servies/tech/view/completed/completed_tech.dart';
 import 'package:mobile_servies/tech/view/home/home.dart';
 import 'package:mobile_servies/tech/view/inProgress/inProgress_tech.dart';
-import 'package:mobile_servies/tech/view/profile/profile_tech.dart';
 import 'package:provider/provider.dart';
 
 class BottomNavTech extends StatelessWidget {
@@ -17,7 +15,6 @@ class BottomNavTech extends StatelessWidget {
     const AssignedPageTech(),
     const InprogressTechPagessss(),
     const CompletedPageTech(),
-    const ProfilePageTech(),
   ];
 
   @override
@@ -43,10 +40,6 @@ class BottomNavTech extends StatelessWidget {
           BottomNavigationBarItem(
             icon: Icon(Icons.check_circle),
             label: 'Completed',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
           ),
         ],
         currentIndex: navigationProvider.selectedIndex,

@@ -1,94 +1,61 @@
+import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:mobile_servies/tech/model/profile_model.dart';
-import 'package:mobile_servies/user/constants/constant_api/const_url.dart';
+import 'package:mobile_servies/user/UserServices/user_authService.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class TechnicianApiService {
+class UserProfileService {
   final Dio _dio = Dio(BaseOptions(
-    baseUrl: '${ApiConstants.baseURL}',
-    // connectTimeout: const Duration(seconds: 30),
-    // receiveTimeout: const Duration(seconds: 30),
+    baseUrl: 'https://mobilemend-backend.onrender.com',
   ));
 
-  Future<List<Technician>> getBestTechnicians({
-    required String customerAddressId,
-    required String deviceId,
-  }) async {
-    try {
-      print('GET /api/Technician/get-best-technicians');
-      print('Query: customerAddressId=$customerAddressId, deviceId=$deviceId');
+  Future<String?> _getAuthToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    log('ℹ️ Retrieved token: ${token != null ? 'present' : 'null'}');
+    return token;
+  }
 
+  Future<UserProfileModel> fetchUserProfile() async {
+    final token = await _getAuthToken();
+    if (token == null) throw Exception('Not authenticated');
+
+    try {
+      log('ℹ️ Fetching user profile');
       final response = await _dio.get(
-        '/api/Technician/get-best-technicians',
-        queryParameters: {
-          'customerAddressId': customerAddressId,
-          'deviceId': deviceId,
-        },
+        '/api/Auth/me',  // Make sure this is the correct endpoint
+        options: Options(headers: {
+          'Authorization': 'Bearer $token',
+        }),
       );
 
-      print('Response status: ${response.statusCode}');
-      print('Response data: ${response.data}');
+      log('ℹ️ API Response: ${response.data.toString()}');
+      log('ℹ️ Status Code: ${response.statusCode}');
 
       if (response.statusCode == 200) {
-        return (response.data as List)
-            .map((tech) => Technician.fromJson(tech))
-            .toList();
+        if (response.data is Map) {
+          // Check if the data is nested under 'data' key or at root
+          final data = response.data['data'] ?? response.data;
+          if (data is Map<String, dynamic>) {
+            log('ℹ️ User profile data parsed successfully');
+            return UserProfileModel.fromJson(data);
+          } else {
+            log('⚠️ Unexpected data format: Expected Map, got ${data.runtimeType}');
+            throw Exception('Unexpected data format');
+          }
+        } else {
+          log('⚠️ Unexpected response format: Expected Map, got ${response.data.runtimeType}');
+          throw Exception('Unexpected response format');
+        }
       }
-      throw Exception('Failed to load technicians');
+      throw Exception('Failed to load user profile: Status ${response.statusCode}');
     } on DioException catch (e) {
-      print('DioException: ${e.message}');
-      throw Exception('Dio error: ${e.message}');
+      log('❌ Error fetching user profile: ${e.response?.data ?? e.message}, Status: ${e.response?.statusCode}');
+      throw Exception('Failed to load user profile: ${e.response?.data['error'] ?? e.message}');
     }
   }
 
-  Future<Technician> getTechnicianDetails(String technicianId) async {
-    try {
-      print('GET /api/Technician/get-technicians');
-      print('Query: technicianId=$technicianId');
+  
 
-      final response = await _dio.get(
-        '/api/Technician/get-technicians',
-        queryParameters: {'technicianId': technicianId},
-      );
-
-      print('Response status: ${response.statusCode}');
-      print('Response data: ${response.data}');
-
-      if (response.statusCode == 200) {
-        return Technician.fromJson(response.data);
-      }
-      throw Exception('Failed to load technician details');
-    } on DioException catch (e) {
-      print('DioException: ${e.message}');
-      throw Exception('Dio error: ${e.message}');
-    }
-  }
-
-  Future<Technician> updateTechnicianStatus({
-    required String technicianId,
-    required bool status,
-  }) async {
-    try {
-      print('PATCH /api/Technician/update-availability');
-      print('Technician ID: $technicianId');
-      print('Status: ${status ? 'Available' : 'Unavailable'}');
-
-      final response = await _dio.patch(
-        '/api/Technician/update-availability',
-        data: {
-          'technicianAvailableLitvStatus': status ? 'Available' : 'Unavailable',
-        },
-      );
-
-      print('Response status: ${response.statusCode}');
-      print('Response data: ${response.data}');
-
-      if (response.statusCode == 200) {
-        return Technician.fromJson(response.data);
-      }
-      throw Exception('Failed to update status');
-    } on DioException catch (e) {
-      print('DioException: ${e.message}');
-      throw Exception('Dio error: ${e.message}');
-    }
-  }
+  
 }

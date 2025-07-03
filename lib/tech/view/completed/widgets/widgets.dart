@@ -1,19 +1,28 @@
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:mobile_servies/tech/constants/colors.dart';
 import 'package:mobile_servies/tech/model/complete_model.dart';
-import 'package:mobile_servies/tech/view/profile/widget/profile_widgets.dart';
+import 'package:mobile_servies/tech/widgets/profile_widgets.dart';
 
 void viewDialog(BuildContext context, CompletedModel task) {
+  log('Displaying task: serviceFee=${task.serviceFee}, bookingFee=${task.bookingFee}, travelAllowances=${task.travelAllowances}');
   showDialog(
     context: context,
     builder: (context) => AlertDialog(
-     actionsAlignment: MainAxisAlignment.end, icon: IconButton(onPressed: (){
-        Navigator.pop(context);
-      }, icon: Icon(Icons.close,color: Colors.white,)),
       backgroundColor: Color.fromARGB(255, 85, 105, 53),
-      title: const Text(
-        "Service Request Details",
-        style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.whiteClr),
+      title: Row(
+        children: [
+          Text(
+            "Service Request Details",
+            style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.whiteClr, fontSize: 20),
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: Icon(Icons.close, color: Colors.white),
+          ),
+        ],
       ),
       content: SingleChildScrollView(
         child: Column(
@@ -21,15 +30,6 @@ void viewDialog(BuildContext context, CompletedModel task) {
           children: [
             Row(
               children: [
-                Expanded(
-                  child: Text(
-                    "Service - ${task.serviceId}",
-                    style: const TextStyle(color: AppColors.whiteClr),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 2,
-                  ),
-                ),
-                const SizedBox(width: 10),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
@@ -44,7 +44,6 @@ void viewDialog(BuildContext context, CompletedModel task) {
               ],
             ),
             const SizedBox(height: 15),
-
             _buildSection(
               icon: Icons.assignment_outlined,
               title: "Service Details",
@@ -77,10 +76,7 @@ void viewDialog(BuildContext context, CompletedModel task) {
                 ],
               ),
             ),
-
             const SizedBox(height: 12),
-
-            // Cost Summary
             _buildSection(
               icon: Icons.attach_money,
               title: "Cost Summary",
@@ -88,13 +84,15 @@ void viewDialog(BuildContext context, CompletedModel task) {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 8),
-                  _costRow("Service Fee:", "₹${task.serviceFee.toStringAsFixed(2)}"),
-                  _costRow("Booking Fee:", "₹${task.bookingFee.toStringAsFixed(2)}"),
-                  _costRow("Travel Allowances:", "₹${task.travelAllowances.toStringAsFixed(2)}"),
+                  _costRow("Service Fee:", task.serviceFee == 0.0 ? "N/A" : "₹${task.serviceFee.toStringAsFixed(2)}"),
+                  _costRow("Booking Fee:", task.bookingFee == 0.0 ? "N/A" : "₹${task.bookingFee.toStringAsFixed(2)}"),
+                  _costRow("Travel Allowances:", task.travelAllowances == 0.0 ? "N/A" : "₹${task.travelAllowances.toStringAsFixed(2)}"),
                   const Divider(color: Colors.white54),
                   _costRow(
                     "Total",
-                    "₹${(task.serviceFee + task.bookingFee + task.travelAllowances).toStringAsFixed(2)}",
+                    (task.serviceFee + task.bookingFee + task.travelAllowances) == 0.0
+                        ? "N/A"
+                        : "₹${(task.serviceFee + task.bookingFee + task.travelAllowances).toStringAsFixed(2)}",
                     isBold: true,
                   ),
                 ],

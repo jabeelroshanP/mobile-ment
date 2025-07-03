@@ -8,6 +8,8 @@ class CompletedTechProvider with ChangeNotifier {
   final UserAuthService authService = UserAuthService();
 
   List<CompletedModel> completedTasks = [];
+  List<CompletedModel> searchCompletedList = [];
+  List<CompletedModel> searchedList = [];
   int selectedIndex = -1;
   bool isLoading = false;
   String? errorMessage;
@@ -29,14 +31,21 @@ class CompletedTechProvider with ChangeNotifier {
           fetchCompletedTasks(technicianId),
           fetchTaskCounts(technicianId),
         ]);
+        // Initialize search lists
+        searchCompletedList = List.from(completedTasks);
+        searchedList = List.from(completedTasks);
       } else {
         errorMessage = 'No technician ID found. Please log in again.';
         completedTasks = [];
+        searchCompletedList = [];
+        searchedList = [];
         taskCounts = {'Assigned': 0, 'InProgress': 0, 'Completed': 0};
       }
     } catch (e) {
       errorMessage = 'Failed to initialize data: $e';
       completedTasks = [];
+      searchCompletedList = [];
+      searchedList = [];
       taskCounts = {'Assigned': 0, 'InProgress': 0, 'Completed': 0};
     } finally {
       isLoading = false;
@@ -44,18 +53,27 @@ class CompletedTechProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchCompletedTasks(String technicianId, {String? searchString}) async {
+   Future<void> refreshCompleted() async {
+    await initialize();
+  }
+
+  Future<void> fetchCompletedTasks(String technicianId) async {
     try {
       completedTasks = await taskService.fetchCompletedTasks(
         technicianId: technicianId,
         status: 'Completed',
-        searchString: searchString,
       );
+     
+      searchCompletedList = List.from(completedTasks);
+      searchedList = List.from(completedTasks);
     } catch (e) {
       errorMessage = 'Failed to fetch completed tasks: $e';
       completedTasks = [];
+      searchCompletedList = [];
+      searchedList = [];
       throw Exception('Failed to fetch completed tasks: $e');
     }
+    notifyListeners();
   }
 
   Future<void> fetchTaskCounts(String technicianId) async {
@@ -66,6 +84,7 @@ class CompletedTechProvider with ChangeNotifier {
       taskCounts = {'Assigned': 0, 'InProgress': 0, 'Completed': 0};
       throw Exception('Failed to fetch task counts: $e');
     }
+    notifyListeners();
   }
 
   void dropContainer(int index) {
@@ -73,25 +92,17 @@ class CompletedTechProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> fetchCompletedTasksWithSearch(String? searchString) async {
-    isLoading = true;
-    errorMessage = null;
-    notifyListeners();
-
-    try {
-      final technicianId = await authService.getTechnicianId();
-      if (technicianId != null) {
-        await fetchCompletedTasks(technicianId, searchString: searchString);
-      } else {
-        errorMessage = 'No technician ID found. Please log in again.';
-        completedTasks = [];
-      }
-    } catch (e) {
-      errorMessage = 'Failed to search completed tasks: $e';
-      completedTasks = [];
-    } finally {
-      isLoading = false;
-      notifyListeners();
+  Future<void> searchFn(String search) async {
+    if (search.isEmpty) {
+      searchedList = List.from(searchCompletedList);
+    } else {
+      searchedList = searchCompletedList.where((task) {
+        return task.customerName.toLowerCase().startsWith(search.toLowerCase()) ||
+            task.issue.toLowerCase().startsWith(search.toLowerCase()) ||
+            task.deviceId.toLowerCase().startsWith(search.toLowerCase()) ||
+            task.deviceDetails.toLowerCase().startsWith(search.toLowerCase());
+      }).toList();
     }
+    notifyListeners();
   }
 }

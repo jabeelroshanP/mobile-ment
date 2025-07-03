@@ -1,3 +1,4 @@
+
 import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:mobile_servies/tech/model/inProgress_model.dart';
@@ -7,8 +8,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 class InProgressTaskService {
   final Dio _dio = Dio(BaseOptions(
     baseUrl: 'https://mobilemend-backend.onrender.com',
-    // connectTimeout: const Duration(seconds: 10),
-    // receiveTimeout: const Duration(seconds: 15),
   ));
   final UserAuthService _authService = UserAuthService();
 
@@ -22,7 +21,6 @@ class InProgressTaskService {
   Future<List<InProgressModel>> fetchInProgressTasks({
     required String technicianId,
     String status = 'InProgress',
-    String? searchString,
   }) async {
     final token = await _getAuthToken();
     if (token == null) throw Exception('Not authenticated');
@@ -34,7 +32,6 @@ class InProgressTaskService {
         queryParameters: {
           'status': status,
           'technicianId': technicianId,
-          if (searchString != null) 'searchString': searchString,
         },
         options: Options(headers: {
           'Authorization': 'Bearer $token',
@@ -178,7 +175,7 @@ class InProgressTaskService {
         data: {
           'technicianId': technicianId,
           'bookingId': bookingId,
-          'status': true, // Assuming reassign sets status to "Assigned"
+          'status': true,
           'rejectionReason': 'Task reassigned by technician',
         },
         options: Options(headers: {

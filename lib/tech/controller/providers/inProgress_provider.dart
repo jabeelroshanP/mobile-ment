@@ -8,6 +8,8 @@ class InProgressTechProvider with ChangeNotifier {
   final UserAuthService authService = UserAuthService();
 
   List<InProgressModel> inProgressTasks = [];
+  List<InProgressModel> searchInProgressList = [];
+  List<InProgressModel> searchedList = [];
   int selectedIndex = -1;
   bool isLoading = false;
   String? errorMessage;
@@ -16,7 +18,6 @@ class InProgressTechProvider with ChangeNotifier {
     'InProgress': 0,
     'Completed': 0,
   };
-  
 
   final Map<String, bool> isCompleting = {};
   final Map<String, bool> isReassigning = {};
@@ -33,14 +34,21 @@ class InProgressTechProvider with ChangeNotifier {
           fetchInProgressTasks(technicianId),
           fetchTaskCounts(technicianId),
         ]);
+        // Initialize search lists
+        searchInProgressList = List.from(inProgressTasks);
+        searchedList = List.from(inProgressTasks);
       } else {
         errorMessage = 'No technician ID found. Please log in again.';
         inProgressTasks = [];
+        searchInProgressList = [];
+        searchedList = [];
         taskCounts = {'Assigned': 0, 'InProgress': 0, 'Completed': 0};
       }
     } catch (e) {
       errorMessage = 'Failed to initialize data: $e';
       inProgressTasks = [];
+      searchInProgressList = [];
+      searchedList = [];
       taskCounts = {'Assigned': 0, 'InProgress': 0, 'Completed': 0};
     } finally {
       isLoading = false;
@@ -48,20 +56,28 @@ class InProgressTechProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchInProgressTasks(String technicianId, {String? searchString}) async {
+   Future<void> refreshInProgress() async {
+    await initialize();
+  }
+
+  Future<void> fetchInProgressTasks(String technicianId) async {
     try {
       inProgressTasks = await taskService.fetchInProgressTasks(
         technicianId: technicianId,
         status: 'InProgress',
-        searchString: searchString,
       );
+      searchInProgressList = List.from(inProgressTasks);
+      searchedList = List.from(inProgressTasks);
       isCompleting.removeWhere((key, _) => !inProgressTasks.any((task) => task.bookingId == key));
       isReassigning.removeWhere((key, _) => !inProgressTasks.any((task) => task.bookingId == key));
     } catch (e) {
       errorMessage = 'Failed to fetch in-progress tasks: $e';
       inProgressTasks = [];
+      searchInProgressList = [];
+      searchedList = [];
       throw Exception('Failed to fetch in-progress tasks: $e');
     }
+    notifyListeners();
   }
 
   Future<void> fetchTaskCounts(String technicianId) async {
@@ -72,6 +88,7 @@ class InProgressTechProvider with ChangeNotifier {
       taskCounts = {'Assigned': 0, 'InProgress': 0, 'Completed': 0};
       throw Exception('Failed to fetch task counts: $e');
     }
+    notifyListeners();
   }
 
   void dropContainer(int index) {
@@ -167,32 +184,24 @@ class InProgressTechProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchInProgressTasksWithSearch(String? searchString) async {
-    isLoading = true;
-    errorMessage = null;
-    notifyListeners();
-
-    try {
-      final technicianId = await authService.getTechnicianId();
-      if (technicianId != null) {
-        await fetchInProgressTasks(technicianId, searchString: searchString);
-      } else {
-        errorMessage = 'No technician ID found. Please log in again.';
-        inProgressTasks = [];
-      }
-    } catch (e) {
-      errorMessage = 'Failed to search in-progress tasks: $e';
-      inProgressTasks = [];
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
-  }
-
   bool isValidGuid(String value) {
     final guidRegex = RegExp(
       r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
     );
     return guidRegex.hasMatch(value);
+  }
+
+  Future<void> searchFn(String search) async {
+    if (search.isEmpty) {
+      searchedList = List.from(searchInProgressList);
+    } else {
+      searchedList = searchInProgressList.where((task) {
+        return task.customerName.toLowerCase().startsWith(search.toLowerCase()) ||
+            task.issue.toLowerCase().startsWith(search.toLowerCase()) ||
+            task.deviceId.toLowerCase().startsWith(search.toLowerCase()) ||
+            task.deviceDetails.toLowerCase().startsWith(search.toLowerCase());
+      }).toList();
+    }
+    notifyListeners();
   }
 }

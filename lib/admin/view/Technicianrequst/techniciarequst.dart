@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:mobile_servies/admin/controller/tech_rqst_provider.dart';
 import 'package:mobile_servies/admin/view/DragBtn/draggable_button.dart';
 import 'package:mobile_servies/admin/view/Technicianrequst/reqst_widget.dart';
 import 'package:mobile_servies/tech/widgets/shimmer.dart';
+import 'package:mobile_servies/tech/widgets/textField.dart';
 import 'package:mobile_servies/user/View/UserHome/homeHeader.dart';
 import 'package:provider/provider.dart';
 
@@ -15,43 +17,44 @@ class Techniciarequstpage extends StatefulWidget {
 
 class _TechniciarequstpageState extends State<Techniciarequstpage> {
   bool _hasFetched = false;
+  final TextEditingController searchCtrl = TextEditingController();
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<TechnicianRequestProvider>();
-      if (!provider.isLoading && provider.requests.isEmpty) {
+      if (!provider.isLoading && provider.requests.isEmpty && !_hasFetched) {
         provider.fetchRequests();
+        _hasFetched = true;
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-
-    
-    final GlobalKey _technicianRqstKey = GlobalKey();
-
-    
-const validStatuses = ['All', 'Pending', 'Approved', 'Rejected'];
+    const validStatuses = ['All', 'Pending', 'Approved', 'Rejected'];
 
     return Scaffold(
       body: Consumer<TechnicianRequestProvider>(
         builder: (context, provider, child) {
-           if (provider.errorMessage != null) {
+          if (provider.errorMessage != null) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(provider.errorMessage!),
-                  backgroundColor: provider.errorMessage!.contains('Approved')?Colors.green :Colors.red,
+                  backgroundColor: provider.errorMessage!.contains('Approved')
+                      ? Colors.green
+                      : provider.errorMessage!.contains('Rejected')
+                          ? Colors.red
+                          : Colors.green[600],
+                  duration: const Duration(seconds: 3),
                 ),
               );
               provider.clearErrorMessage();
             });
           }
 
-          
           if (!validStatuses.contains(provider.statusFilter)) {
             provider.setStatusFilter('All');
           }
@@ -82,14 +85,21 @@ const validStatuses = ['All', 'Pending', 'Approved', 'Rejected'];
                             "Manage bookings, services, devices, and technicians",
                             style: TextStyle(color: Colors.grey, fontSize: 14),
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 16),
+                          techRequestSearchField(
+                            context: context,
+                            onChanged: (value) {
+                              provider.searchFn(value);
+                            },
+                            controller: searchCtrl,
+                          ),
+                          const SizedBox(height: 16),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
+                              const Text(
                                 "All Requests",
-                                key: _technicianRqstKey,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.white,
@@ -108,40 +118,15 @@ const validStatuses = ['All', 'Pending', 'Approved', 'Rejected'];
                                 onChanged: (value) {
                                   if (value != null && validStatuses.contains(value)) {
                                     provider.setStatusFilter(value);
-                                    _hasFetched = false; 
+                                    _hasFetched = false;
+                                    searchCtrl.clear();
+                                    provider.searchFn('');
                                   }
                                 },
                                 icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
                                 underline: Container(height: 1, color: Colors.white70),
                               ),
                             ],
-                          ),
-                          const SizedBox(height: 16),
-                          TextField(
-                            style: const TextStyle(color: Colors.white),
-                            decoration: const InputDecoration(
-                              fillColor: Color(0xFF718355),
-                              filled: true,
-                              hintText: 'Search by name or phone',
-                              hintStyle: TextStyle(color: Colors.white70),
-                              prefixIcon: Icon(Icons.search, color: Colors.white70),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.all(Radius.circular(12)),
-                                borderSide: BorderSide(color: Colors.white70),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.all(Radius.circular(12)),
-                                borderSide: BorderSide(color: Colors.white70),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.all(Radius.circular(12)),
-                                borderSide: BorderSide(color: Colors.white),
-                              ),
-                            ),
-                            onChanged: (value) {
-                              provider.setSearchQuery(value);
-                              _hasFetched = false;
-                            },
                           ),
                         ],
                       ),
@@ -151,7 +136,7 @@ const validStatuses = ['All', 'Pending', 'Approved', 'Rejected'];
                       child: Container(
                         width: double.infinity,
                         decoration: const BoxDecoration(
-                          color: Color.fromARGB(255, 255, 255, 255),
+                          color: Colors.white,
                           borderRadius: BorderRadius.only(
                             topLeft: Radius.circular(40),
                             topRight: Radius.circular(40),
@@ -161,41 +146,79 @@ const validStatuses = ['All', 'Pending', 'Approved', 'Rejected'];
                           padding: const EdgeInsets.all(20.0),
                           child: provider.isLoading
                               ? buildShimmerList()
-                              : provider.requests.isEmpty
+                              : provider.searchedList.isEmpty
                                   ? Center(
                                       child: Column(
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
-                                          const SizedBox(height: 16),
+                                          Icon(
+                                            Icons.search_off,
+                                            size: 50,
+                                            color: Colors.grey[400],
+                                          ),
+                                          const SizedBox(height: 10),
                                           Text(
-                                            'No Requests Found',
-                                            style: const TextStyle(
-                                              color: Colors.black87,
-                                              fontSize: 20,
+                                            'No technician requests found',
+                                            style: TextStyle(
+                                              color: Colors.grey[600],
+                                              fontSize: 18,
                                               fontWeight: FontWeight.w500,
                                             ),
                                           ),
+                                          if (provider.errorMessage != null)
+                                            Padding(
+                                              padding: const EdgeInsets.only(top: 10),
+                                              child: ElevatedButton(
+                                                onPressed: () {
+                                                  provider.fetchRequests();
+                                                  _hasFetched = false;
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: const Color(0xFF718355),
+                                                  foregroundColor: Colors.white,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(8),
+                                                  ),
+                                                ),
+                                                child: const Text('Retry'),
+                                              ),
+                                            ),
                                         ],
                                       ),
                                     )
-                                  : ListView.builder(
-                                      itemCount: provider.requests.length,
-                                      itemBuilder: (context, index) {
-                                        final request = provider.requests[index];
-                                        return buildTechnicianRequestCard(
-                                          context: context,
-                                          request: request,
-                                          provider: provider,
-                                        );
-                                      },
-                                    ),
+                                  : RefreshIndicator(
+                                    onRefresh: () => provider.refreshRqsts(),
+                                    child: ListView.builder(
+                                        itemCount: provider.searchedList.length,
+                                        itemBuilder: (context, index) {
+                                          final request = provider.searchedList[index];
+                                          return Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius: BorderRadius.circular(10),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black.withOpacity(0.1),
+                                                  blurRadius: 5,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ],
+                                            ),
+                                            child: buildTechnicianRequestCard(
+                                              context: context,
+                                              request: request,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                  ),
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-              DraggableFabMenu(adminDashboardKey: _technicianRqstKey),
+              DraggableFabMenu(adminDashboardKey: GlobalKey()),
             ],
           );
         },

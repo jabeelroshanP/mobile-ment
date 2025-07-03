@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_servies/user/UserModel/loginmodel.dart';
+import 'package:mobile_servies/tech/controller/providers/profile_provider.dart';
+import 'package:mobile_servies/user/UserModel/AuthModel/loginmodel.dart';
 import 'package:mobile_servies/user/UserModel/registermodel.dart';
 import 'package:mobile_servies/user/UserServices/user_authService.dart';
 import 'package:mobile_servies/user/View/UserRegister/validationrgister.dart';
+import 'package:path/path.dart';
+import 'package:provider/provider.dart';
 
 class UserAuthProvider extends ChangeNotifier {
   final UserAuthService _authService = UserAuthService();
@@ -128,6 +131,8 @@ class UserAuthProvider extends ChangeNotifier {
       successMessage = 'Login Successful!';
       errorMessage = '';
       userRole = await _authService.getUserRole();
+      final profileProvider = Provider.of<UserProfileProvider>(context, listen: false);
+    await profileProvider.fetchUserProfile();
     } else {
       errorMessage = response;
       successMessage = '';
@@ -150,11 +155,24 @@ class UserAuthProvider extends ChangeNotifier {
   }
 
   /// Logout
+  // Future<void> logoutUser() async {
+  //   await _authService.logout();
+  //   clearAllFields();
+  //   notifyListeners();
+  // }
+
+
+
   Future<void> logoutUser() async {
-    await _authService.logout();
-    clearAllFields();
-    notifyListeners();
-  }
+  await _authService.logout();
+  clearAllFields();
+  
+  // Add this to clear profile data
+  final profileProvider = Provider.of<UserProfileProvider>(context as BuildContext, listen: false);
+  profileProvider.clearProfileData();
+  
+  notifyListeners();
+}
 
   /// Clear all controllers and state
   void clearAllFields() {

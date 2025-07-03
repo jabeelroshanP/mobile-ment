@@ -1,12 +1,12 @@
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_servies/admin/controller/bookingprovider.dart';
 import 'package:mobile_servies/admin/view/DragBtn/draggable_button.dart';
-import 'package:mobile_servies/admin/widgets.dart';
 import 'package:mobile_servies/tech/widgets/shimmer.dart';
+import 'package:mobile_servies/tech/widgets/textField.dart';
 import 'package:mobile_servies/user/View/UserHome/homeHeader.dart';
 import 'package:provider/provider.dart';
-
 
 class Bookingpage extends StatelessWidget {
   const Bookingpage({Key? key}) : super(key: key);
@@ -15,6 +15,7 @@ class Bookingpage extends StatelessWidget {
   Widget build(BuildContext context) {
     final GlobalKey bookingPgKey = GlobalKey();
     final provider = Provider.of<BookingProvider>(context, listen: false);
+    final TextEditingController searchCtrl = TextEditingController();
 
     if (!provider.isLoading && provider.bookings.isEmpty && provider.error.isEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -35,8 +36,8 @@ class Bookingpage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                       AppLogo(),
-                      const SizedBox(height: 24),
+                      AppLogo(),
+                      const SizedBox(height: 15),
                       const Text(
                         "Bookings",
                         style: TextStyle(
@@ -49,7 +50,15 @@ class Bookingpage extends StatelessWidget {
                         "Manage bookings, services, devices, and technicians",
                         style: TextStyle(color: Colors.grey, fontSize: 14),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
+                      bookingSearchField(
+                        context: context,
+                        onChanged: (value) {
+                          provider.searchFn(value);
+                        },
+                        controller: searchCtrl,
+                      ),
+                      const SizedBox(height: 16),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -67,19 +76,22 @@ class Bookingpage extends StatelessWidget {
                               return DropdownButton<String>(
                                 value: value.selectedFilter,
                                 dropdownColor: const Color(0xFF718355),
-                                style:  TextStyle(
+                                style: const TextStyle(
                                     color: Colors.white, fontSize: 14),
                                 items: value.filterOptions.map((String value) {
                                   return DropdownMenuItem<String>(
                                     value: value,
-                                    child: Text(value,
-                                        style:
-                                            const TextStyle(color: Colors.white)),
+                                    child: Text(
+                                      value,
+                                      style: const TextStyle(color: Colors.white),
+                                    ),
                                   );
                                 }).toList(),
                                 onChanged: (String? newValue) {
                                   if (newValue != null) {
                                     value.setFilter(newValue);
+                                    searchCtrl.clear();
+                                    value.searchFn('');
                                   }
                                 },
                                 icon: const Icon(Icons.arrow_drop_down,
@@ -133,7 +145,7 @@ class Bookingpage extends StatelessWidget {
                               ),
                             );
                           }
-                          if (provider.bookings.isEmpty) {
+                          if (provider.searchedList.isEmpty) {
                             return const Center(
                               child: Text(
                                 "No bookings available",
@@ -142,24 +154,27 @@ class Bookingpage extends StatelessWidget {
                               ),
                             );
                           }
-                          return ListView.builder(
-                            itemCount: provider.bookings.length,
-                            itemBuilder: (context, index) {
-                              final booking = provider.bookings[index];
-                              return _buildBookingCard(
-                                context: context,
-                                customerName: booking.customerName ?? 'Unknown',
-                                service: booking.serviceName ?? 'Unknown',
-                                device: booking.deviceName ?? 'Unknown',
-                                date: booking.createdAt != null
-                                    ? DateFormat('MMM d, yyyy')
-                                        .format(booking.createdAt!)
-                                    : 'Unknown',
-                                amount: booking.amount ?? 0.0,
-                                status: booking.status ?? 'Unknown',
-                                statusColor: booking.statusColor,
-                              );
-                            },
+                          return RefreshIndicator(
+                            onRefresh:() => provider.fetchBookings(),
+                            child: ListView.builder(
+                              itemCount: provider.searchedList.length,
+                              itemBuilder: (context, index) {
+                                final booking = provider.searchedList[index];
+                                return _buildBookingCard(
+                                  context: context,
+                                  customerName: booking.customerName ?? 'Unknown',
+                                  service: booking.serviceName ?? 'Unknown',
+                                  device: booking.deviceName ?? 'Unknown',
+                                  date: booking.createdAt != null
+                                      ? DateFormat('MMM d, yyyy')
+                                          .format(booking.createdAt!)
+                                      : 'Unknown',
+                                  amount: booking.amount ?? 0.0,
+                                  status: booking.status ?? 'Unknown',
+                                  statusColor: booking.statusColor,
+                                );
+                              },
+                            ),
                           );
                         },
                       ),

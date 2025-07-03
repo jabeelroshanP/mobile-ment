@@ -1,50 +1,46 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:mobile_servies/tech/model/profile_model.dart';
 import 'package:mobile_servies/tech/service/profile_service.dart';
+import 'dart:developer';
 
-class TechnicianProfileProvider with ChangeNotifier {
-  final TechnicianApiService _apiService;
-  Technician? _currentTechnician;
+import 'package:mobile_servies/user/UserServices/user_authService.dart';
+
+class UserProfileProvider with ChangeNotifier {
+  final UserProfileService _profileService = UserProfileService();
+  
+  UserProfileModel? _userProfile;
   bool _isLoading = false;
-  String? _error;
+  String? _errorMessage;
 
-  TechnicianProfileProvider(this._apiService);
-
-  Technician? get currentTechnician => _currentTechnician;
+  UserProfileModel? get userProfile => _userProfile;
   bool get isLoading => _isLoading;
-  String? get error => _error;
+  String? get errorMessage => _errorMessage;
 
-  Future<void> fetchTechnicianDetails(String technicianId) async {
+  Future<void> fetchUserProfile() async {
     _isLoading = true;
-    _error = null;
+    _errorMessage = null;
     notifyListeners();
 
     try {
-      _currentTechnician = await _apiService.getTechnicianDetails(technicianId);
+      _userProfile = await _profileService.fetchUserProfile();
+      log('ℹ️ User profile fetched: ${_userProfile!.name}, ${_userProfile!.role}');
     } catch (e) {
-      _error = e.toString();
+      _errorMessage = e.toString();
+      _userProfile = null;
+      log('❌ Error fetching user profile: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> updateOnlineStatus(bool isOnline) async {
-    if (_currentTechnician == null) return;
 
-    _isLoading = true;
-    notifyListeners();
+  void clearProfileData() {
+  _userProfile = null;
+  _isLoading = false;
+  _errorMessage = null;
+  notifyListeners();
+}
 
-    try {
-      _currentTechnician = await _apiService.updateTechnicianStatus(
-        technicianId: _currentTechnician!.technicianId,
-        status: isOnline,
-      );
-    } catch (e) {
-      _error = e.toString();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
+
 }

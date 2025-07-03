@@ -7,20 +7,31 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class TechnicianRequestProvider with ChangeNotifier {
   List<TechnicianRequest> requests = [];
-  bool isLoading = false;
+  List<TechnicianRequest> searchRequestsList = [];
+  List<TechnicianRequest> searchedList = [];
   String? errorMessage;
   String statusFilter = 'All';
-  String searchQuery = '';
+  bool isLoading = false;
+  bool isApproving = false;
+  bool isRejecting = false;
+  String? currentProcessingId;
 
   final TechnicianRequestService _service = TechnicianRequestService();
 
   Future<bool> _checkTokenValidity() async {
     final prefs = await SharedPreferences.getInstance();
     final token = await prefs.getString('auth_token');
-    if (token == null || token.isEmpty) return false;
+    if (token == null || token.isEmpty) {
+      log('No auth token found');
+      return false;
+    }
 
     try {
       final Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+      if (!decodedToken.containsKey('exp')) {
+        log('Token missing exp claim');
+        return false;
+      }
       final int exp = decodedToken['exp'];
       final DateTime expiryDate = DateTime.fromMillisecondsSinceEpoch(exp * 1000);
       return expiryDate.isAfter(DateTime.now());
@@ -33,6 +44,9 @@ class TechnicianRequestProvider with ChangeNotifier {
   Future<void> fetchRequests() async {
     if (!(await _checkTokenValidity())) {
       errorMessage = 'Session expired. Please log in again.';
+      requests = [];
+      searchRequestsList = [];
+      searchedList = [];
       notifyListeners();
       return;
     }
@@ -44,21 +58,26 @@ class TechnicianRequestProvider with ChangeNotifier {
     try {
       requests = await _service.fetchTechnicianRequests(
         status: statusFilter == 'All' ? null : statusFilter,
-        search: searchQuery.isEmpty ? null : searchQuery,
       );
+      searchRequestsList = List.from(requests);
+      searchedList = List.from(requests);
       log('Fetched ${requests.length} requests with filter: $statusFilter');
-      isLoading = false;
-      notifyListeners();
-    } catch (e) {
-      // Only set errorMessage for unhandled errors
-      if (e.toString().contains('Requests not found')) {
-        requests = [];
-      } else {
-        errorMessage = e.toString().replaceFirst('Exception: ', '');
+      if (requests.isEmpty) {
+        errorMessage = 'No technician requests found for the selected criteria.';
       }
+    } catch (e) {
+      errorMessage = e.toString().replaceFirst('Exception: ', '');
+      requests = [];
+      searchRequestsList = [];
+      searchedList = [];
+    } finally {
       isLoading = false;
       notifyListeners();
     }
+  }
+
+   Future<void> refreshRqsts() async {
+    await fetchRequests();
   }
 
   Future<bool> updateRequestStatus({
@@ -72,8 +91,12 @@ class TechnicianRequestProvider with ChangeNotifier {
       return false;
     }
 
-    isLoading = true;
-    errorMessage = null;
+    if (status) {
+      isApproving = true;
+    } else {
+      isRejecting = true;
+    }
+    currentProcessingId = technicianRequestId;
     notifyListeners();
 
     try {
@@ -82,37 +105,50 @@ class TechnicianRequestProvider with ChangeNotifier {
         status: status,
         adminRemarks: adminRemarks,
       );
+      
       if (success) {
         await fetchRequests();
-        if (status) {
-          errorMessage = 'Technician request approved! User is now a Technician.';
-        } else {
-          errorMessage = 'Technician request rejected.';
-        }
+        errorMessage = status
+            ? 'Technician request approved! User is now a Technician.'
+            : 'Technician request rejected.';
       } else {
         errorMessage = 'Failed to update request status.';
       }
-      isLoading = false;
-      notifyListeners();
       return success;
     } catch (e) {
       errorMessage = e.toString().replaceFirst('Exception: ', '');
-      isLoading = false;
-      notifyListeners();
       return false;
+    } finally {
+      isApproving = false;
+      isRejecting = false;
+      currentProcessingId = null;
+      notifyListeners();
     }
   }
 
-  void setStatusFilter(String newFilter) {
-    statusFilter = newFilter;
-    log('Status filter set to: $statusFilter');
-    fetchRequests();
+  Future<void> searchFn(String search) async {
+    if (search.isEmpty) {
+      searchedList = List.from(searchRequestsList);
+    } else {
+      searchedList = searchRequestsList.where((request) {
+        return request.name.toLowerCase().contains(search.toLowerCase()) ||
+            request.experience.toString().toLowerCase().contains(search.toLowerCase()) ||
+            request.requestDate.toLowerCase().contains(search.toLowerCase());
+      }).toList();
+    }
+    notifyListeners();
   }
 
-  void setSearchQuery(String query) {
-    searchQuery = query;
-    log('Search query set to: $searchQuery');
-    fetchRequests();
+  void setStatusFilter(String newFilter) {
+    if (['All', 'Pending', 'Approved', 'Rejected'].contains(newFilter)) {
+      statusFilter = newFilter;
+      log('Status filter set to: $statusFilter');
+      fetchRequests();
+    } else {
+      log('Invalid status filter: $newFilter');
+      errorMessage = 'Invalid status filter selected.';
+      notifyListeners();
+    }
   }
 
   void clearErrorMessage() {
